@@ -1,0 +1,42 @@
+If(
+    // The two filter functions first search the ReplaceRev table and identify the logbook & buffer prep row
+    // LookUp function returns the Name of the Logbook & Bioreactor row if the Bool column is 1 (meaning that a person has been replaced
+    // // If there is no name to return (Bool = 0), then LookUp returns {Blank}
+    // IsBlank returns True if the LookUp function returns {Blank}, and False if the LookUp function returns a name
+    IsBlank(
+        LookUp(
+            Filter(Filter(ReplaceRev,Area = Bioreactor_Label.Text), Type = Logbooks_Title.Text), 
+            Bool = "1", 
+            Name
+        )
+    ),
+    // If not being replaced, uses below algorithm to assign a reviewer
+    If(
+        Value(CMNI + 0) <= Value(Num_Employees.Text),
+        LookUp(
+            Team_Info,
+            Num = Text(CMNI + 0),
+            Names
+        ),
+        // Applies modular arithmetic if the "CMNI + n" value is greater than the number of employees
+        If(
+            Mod(CMNI + 0, Value(Num_Employees.Text)) = 0, 
+            LookUp(
+                Team_Info, 
+                Num = Text(Mod(CMNI + 1, Value(Num_Employees.Text))),
+                Names
+            ),
+            LookUp(
+                Team_Info,
+                Num = Text(Mod(CMNI + 0, Value(Num_Employees.Text))),
+                Names
+            )
+        )
+    ),
+    // If user is being replaced, looks up the reviewer in ReplaceRev
+    LookUp(
+        Filter(Filter(ReplaceRev,Area = Bioreactor_Label.Text), Type = Logbooks_Title.Text), 
+        Bool = "1", 
+        Name
+    )
+)
